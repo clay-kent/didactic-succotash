@@ -1,0 +1,23 @@
+<h1>didactic-succotash</h1>
+<h1>RhinoでMarkdown→HTML変換する方法</h1>
+<h2>必要ファイル</h2>
+<ul>
+<li>mdToHTML.js</li>
+<li>markdown-it.min.js（UMDビルド、CDNから取得済み）</li>
+<li>変換したいMarkdownファイル（例：README.md）</li>
+</ul>
+<h2>実行例</h2>
+<p>Rhino（JavaScriptエンジン）で以下のコマンドを実行してください。</p>
+<pre><code>java -jar rhino.jar mdToHTML.js README.md README.html
+</code></pre>
+<ul>
+<li><code>README.md</code> をHTMLに変換し、<code>README.html</code>として出力します。</li>
+<li>他のMarkdownファイルも同様に変換できます。</li>
+</ul>
+<h2>備考</h2>
+<ul>
+<li>Rhinoのjarファイル（rhino.jar）は別途用意してください。</li>
+<li>markdown-it.min.jsはCDNから最新版を取得し、同じフォルダに配置してください。</li>
+<li>mdToHTML.jsは標準入力/出力には対応していません。ファイル指定のみです。</li>
+</ul>
+<hr>

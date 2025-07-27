@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Rhino（ライノ）とは？3Dモデリングソフトの紹介</title>
+
+    <link rel="stylesheet" href="main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+
+    <header>
+        <h1>Rhino（ライノ）とは？</h1>
+        <p>3Dモデリングソフト「Rhinoceros（ライノセラス）」の特徴と魅力を紹介します。</p>
+    </header>
+    <div class="container">
+        <main>
+<h1>didactic-succotash</h1>
+<h1>RhinoでMarkdown→HTML変換する方法</h1>
+<h2>必要ファイル</h2>
+<ul>
+<li>mdToHTML.js</li>
+<li>markdown-it.min.js（UMDビルド、CDNから取得済み）</li>
+<li>変換したいMarkdownファイル（例：README.md）</li>
+</ul>
+<h2>実行例</h2>
+<p>Rhino（JavaScriptエンジン）で以下のコマンドを実行してください。</p>
+<pre><code>java -jar rhino.jar mdToHTML.js README.md README.html
+</code></pre>
+<ul>
+<li><code>README.md</code> をHTMLに変換し、<code>README.html</code>として出力します。</li>
+<li>他のMarkdownファイルも同様に変換できます。</li>
+</ul>
+<h2>備考</h2>
+<ul>
+<li>Rhinoのjarファイル（rhino.jar）は別途用意してください。</li>
+<li>markdown-it.min.jsはCDNから最新版を取得し、同じフォルダに配置してください。</li>
+<li>mdToHTML.jsは標準入力/出力には対応していません。ファイル指定のみです。</li>
+</ul>
+<hr>
+
+</main>
+        <footer>
+            <small>&copy; 2025 Rhino紹介モック記事</small>
+        </footer>
+    </div>
+</body>
+</html>

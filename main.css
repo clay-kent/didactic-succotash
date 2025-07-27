@@ -1,0 +1,64 @@
+footer {
+    width: 100vw;
+    min-width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 20px 0;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+/* Reset CSS */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #fff;
+    font-family: Arial, sans-serif;
+    padding: 0px 10px;
+}
+
+/*レスポンシブデザイン*/
+@media (max-width: 600px) {
+    body {
+        font-size: 14px;
+    }
+    header h1 {
+        font-size: 24px;
+    }
+    main {
+        padding: 10px;
+    }
+    .container {
+        padding: 10px;
+    }
+}
+header {
+    width: 100vw;
+    min-width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 20px 0;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+.container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+html {
+    font-family: Arial, sans-serif;
+}
+.noto-sans-jp-unique {
+    font-family: "Noto Sans JP", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+}
