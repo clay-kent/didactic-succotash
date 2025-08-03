@@ -1,0 +1,225 @@
+
+# タイトル: Rhinoの仕様と構文のミスマッチをコーディング規約で解決する。
+
+### はじめに
+
+MinecraftのMod「KubeJS」は、JavaScriptを用いてゲーム内のレシピ、アイテム、イベントなどを自由にカスタマイズできる強力なツールです。このスクリプトの実行エンジンとして採用されているのが、今でも更新されているJavaベースのJavaScriptエンジン「[Rhino](https://github.com/mozilla/rhino)」です。
+
+Rhinoは、ES6（ECMAScript 2015）の一部の構文を解釈できるものの、その挙動はES5のものと大差ありません。「モダンJSの構文」を使える一方で、それが「開発者(や生成AI)が知る仕様」と異なるため、予期せぬエラーやバグが頻発します。
+とはいえ、問題はJavascriptエンジンとしての完成度ではなく、そのギャップです。
+ES5と同じ挙動をすると理解して使えば良いのです。
+
+
+本稿の目的は、このRhino環境の「癖」を深く理解し、それによって引き起こされる問題を未然に防ぐための、実践的なコーディング規約を体系的にまとめることです。これは単なる個人の備忘録ではなく、将来のチーム開発も見据え、コードの安定性、保守性、そして予測可能性を確保するための、技術的な土台となります。
+
+
+Rhinoがどの構文・機能に対応しているかは、公式の互換性リスト（https://mozilla.github.io/rhino/compat/engines.html）で随時確認できます。
+
+### 2. 核心的問題：構文の互換性と挙動の非互換性
+
+
+Rhinoにおける問題の根源は、「構文（Syntax）は解釈できるが、その挙動（Behavior）が標準仕様と異なる」という点に集約されます。開発者は`let`や`const`、アロー関数といった見慣れたキーワードを使えてしまうため、当然それらがモダンなエンジンと同じように動作すると期待します。しかし、Rhinoの内部では、それらが旧来の`var`や`function`キーワードに近い、異なるセマンティクスで処理されるのです。この「期待の裏切り」こそが、最も危険な罠です。
+
+
+### 3. ケーススタディと具体的なコーディング規約
+
+
+以下に、我々が直面した代表的な問題と、それを解決・回避するための規約を、具体的なコード例と共に詳述します。
+
+
+#### 3.1. 【最重要】変数宣言とスコープ：`let`/`const`の裏切り
+
+
+現象: `let`や`const`で宣言した変数が、ブロックスコープを持たず、再代入不可のはずの`const`が再宣言エラーを引き起こします。
+
+
+問題のコード例:
+
+```javascript
+// forループ内で定数を宣言し、その値をログに出力する
+for (let i = 0; i < 3; i++) {
+    // モダンな環境では、このループは3回実行され、
+    // ループごとに新しいスコープと新しい変数nが生成される
+    const n = i * 2;
+    console.log(`Loop ${i}: n = ${n}`);
+}
+```
+
+
+Rhinoで発生するエラー:
+
+```
+TypeError: redeclaration of var n. (...
+```
+
+
+分析:
+このエラーメッセージが全てを物語っています。我々は`const n`と記述したにも関わらず、Rhinoは「`var n`の再宣言（redeclaration）」としてエラーを出力しています。これは、Rhinoが`let`や`const`というキーワードを構文として認識はするものの、その実態はブロックスコープを生成せず、関数全体で有効な`var`として解釈・処理していることを明確に示しています。`var`で宣言された変数は巻き上げ（hoisting）の対象となり、同じスコープ内で再宣言することはできません。そのため、ループの2周目で`const n`（実態は`var n`）が再度実行された際に、このエラーが発生します。
+
+
+【規約1】変数宣言は、誤解を避けるため`var`に統一し、必ず関数の先頭で宣言する。`let`および`const`は、ブロックスコープを持つという開発者の期待を裏切り、深刻なバグの原因となるため、絶対に使用しないこと。
+
+
+#### 3.2. クロージャ：ループ処理に潜む時限爆弾
+
+
+このスコープの問題は、関数をループ内で生成するクロージャにおいて、より発見しにくいロジックエラーとして現れます。
+
+
+問題のコード例:
+
+```javascript
+var functions = [];
+// 0から3までのインデックス値を返す関数を、ループで生成する
+for (var i = 0; i < 4; i++) {
+    // この時点で、iの値をキャプチャしていると期待される
+    functions.push(function() { return i; });
+}
+
+// ループの終了後に、作成した関数をすべて実行する
+functions.forEach(function(fn) {
+    console.log(fn()); // 期待値: 0, 1, 2, 3 -> 実際の出力: 4, 4, 4, 4
+});
+```
+
+
+分析:
+JavaScriptのクロージャは、関数が「定義された時点」のスコープ（アクセス可能な変数の集まり）を記憶する機能です。しかし、`for`ループで`var i`を使用した場合、変数`i`はループ全体で唯一のインスタンスとして扱われます。ループ内で生成された4つの関数が記憶するのは、ループ各時点での`i`の値（0, 1, 2, 3）ではなく、`i`という変数そのものへの参照です。
+そのため、`forEach`で各関数が実行される時点では、ループは既に完了しており、`i`の値は`4`になっています。結果として、全ての関数が同じ`4`という値を返してしまうのです。
+
+
+解決策と規約:
+この問題を解決するには、イテレーションごとに新しい、独立したスコープを生成し、その時点での値をキャプチャする必要があります。
+
+
+    * 解決策1: `forEach`メソッド
+
+    ```javascript
+    var functions = [];
+    [0, 1, 2, 3].forEach(function(i) {
+        // コールバック関数が呼ばれるたびに、新しいスコープと新しい変数iが作られる
+        functions.push(function() { return i; });
+    });
+    // ... 実行すれば正しく 0, 1, 2, 3 と出力される
+    ```
+
+
+    * 解決策2: 即時実行関数 (IIFE - Immediately Invoked Function Expression)
+
+    ```javascript
+    var functions = [];
+    for (var i = 0; i < 4; i++) {
+        // 即時実行関数で新しいスコープを作り、iを引数として渡す
+        functions.push((function(captured_i) {
+            return function() { return captured_i; };
+        })(i));
+    }
+    // ... これも正しく 0, 1, 2, 3 と出力される
+    ```
+
+
+【規約2】ループ内でクロージャを生成する場合は、原則として`forEach`メソッドを使用する。配列以外のイテレーションで`for`ループが不可欠な場合は、即時実行関数（IIFE）パターンを用いて、イテレーションごとに明確なスコープを生成し、変数をキャプチャすること。
+
+
+#### 3.3. その他の重要な規約と非互換性リスト
+
+
+    * アロー関数 (`=>`): `this`をレキシカルに束縛しません。`this`の挙動は従来の`function`式と全く同じです。`this`のコンテキストが重要なオブジェクトのメソッド定義などには絶対に使用せず、`this`を扱わない単純な無名コールバック（例: `array.map(item => item * 2)`）に限定して使用してください。
+
+    * オブジェクトリテラル短縮記法: `const x = 1; const obj = {x};` のような記法はサポートされていません。必ず `{x: x}` のように明記してください。
+
+    * `class`構文: ES5の時代では、オブジェクト生成は、従来のプロトタイプベースのパターンで行うのが最も安全とされていました。
+
+    * 型チェック (`@ts-check`, `@ts-ignore`):
+
+            * `@ts-check`は、`startup_scripts`のような実験的で複雑なコードを記述する際の柔軟性を確保するため、プロジェクト全体の必須要件とはしません。ただし、安定したライブラリコードなど、適用が有益なファイル単位での利用を推奨します。
+            * `@ts-ignore`は、型エラーの根本解決を放棄し、コードの品質と可読性を著しく低下させるため、いかなる状況でも絶対に使用を禁止します。
+
+    * 未サポート機能の例: `async/await`, `Promise`, `iterator`, `optional chaining (?.)`, `Array.prototype.flat()` など、ES6以降の多くの便利な機能は利用できません。
+
+
+### 4. 結論：規約がもたらす価値とトレードオフ
+
+
+本規約は、Rhinoという特殊な実行環境の「癖」を理解し、防御的にコーディングすることで、アプリケーションの安定性と保守性を飛躍的に向上させることを目的とします。
+
+
+確かに、これらの規約に従うことは、モダンなJavaScriptが提供する多くの便利な構文や機能を意図的に放棄することを意味し、コードが冗長になるというデメリットを伴います。しかし、このトレードオフは、原因不明のエラーに悩まされ、デバッグに膨大な時間を費やすリスクを考えれば、十分に正当化されるものです。
+
+
+最終的に、一貫した規約の適用は、個人の生産性を高めるだけでなく、チーム全体のスムーズな知識共有と、長期的に維持可能なコードベースの構築に不可欠な投資となります。
+
+### 付録 AI用の規約
+```
+# KubeJS Scripting Conventions for Rhino
+
+
+
+### KubeJS Type Definitions
+
+
+
+1. Main type definition files: Refer to kubejs/probe/generated/{name}.d.ts where {name} is one of: constants, events, globals, names, raw, registries, tag_event
+
+2. Internal types: Search and crawl by type name within kubejs/probe/generated/internals/
+
+3. Global availability: Types are globally available (e.g., Internal.RecipeJS). No import is needed.
+
+
+
+## Most notable incompatibilities and missing features
+
+Because Rhino is meant to script some logic with general JavaScript functionality, it's partially ES6 compatible and leaves quite a few things to be desired.
+
+
+
+- Avoid Object Literal Shorthand: Always write property and method names explicitly (e.g., { myProp: myProp }).
+
+- While Rhino recognizes the let and const keywords, they do not have block-scoping and behave like var.
+
+- Variable Declarations: Declare all variables at the top of a function. Do not declare them inside blocks (if, for, while).
+
+- Closures in Loops: Be aware of closure pitfalls. When creating functions inside a loop, use an Immediately Invoked Function Expression (IIFE) or a helper function to create a new scope for each iteration.
+
+- use function declarations for named functions/methods, arrow functions for anonymous callbacks.
+
+- Avoid using arrow functions for top-level functions, constructors, or methods that need their own `this` or `prototype`.
+
+- they don't have lexical this or arguments binding as they do in modern JavaScript engines and behave like traditional function expressions.
+
+- For the sake of readability, use the syntax that are available. example: template-literal, arrow function
+
+- Not supported: async, strict mode, iterator, Most other new built-in methods like flat(), optional chaining operator
+
+- Supported features: shorthand methods, string-keyed shorthand methods, simple destructuring & declarations, trailing commas, typed arrays, All String.prototype methods, Array.from array-like & map function, Array.of, Array.prototype methods, Number properties, math methods
+
+- Module system: CommonJS(require) only
+
+
+
+## Other
+
+- class keyword: Use prototype-based patterns for object creation.
+
+
+
+- this Keyword: The value of this changes depending on how a function is called. Use .call(), .apply(), or .bind() to explicitly set its context when necessary.
+
+- Global Namespace: When you need to expose something globally, attach it to a single global object
+
+- @ts-check is not a project-wide requirement, to maintain the flexibility of scripting
+
+example needs: startup_scripts, many bug or complex, long
+
+- **Absolutely forbid the use of `@ts-ignore` in all circumstances.**
+
+Never use `@ts-ignore` under any situation as it suppresses TypeScript errors and undermines code quality and maintainability.
+
+However, absolutely forbid the use delete existing it too.
+
+
+
+> rhino target in Babel: https://babeljs.io/docs/en/options#targets
+
+> Detailed list: https://mozilla.github.io/rhino/compat/engines.html
+```

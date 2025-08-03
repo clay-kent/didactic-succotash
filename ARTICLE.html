@@ -1,25 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>タイトル: Rhinoの仕様と構文のミスマッチをコーディング規約で解決する。</title>
-
-    <link rel="stylesheet" href="main.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
-</head>
-<body>
-
-
-    <header>
 <h1>タイトル: Rhinoの仕様と構文のミスマッチをコーディング規約で解決する。</h1>
-</header>
-    <div class="container">
-        <main>
 <h3>はじめに</h3>
 <p>MinecraftのMod「KubeJS」は、JavaScriptを用いてゲーム内のレシピ、アイテム、イベントなどを自由にカスタマイズできる強力なツールです。このスクリプトの実行エンジンとして採用されているのが、今でも更新されているJavaベースのJavaScriptエンジン「<a href="https://github.com/mozilla/rhino">Rhino</a>」です。</p>
 <p>Rhinoは、ES6（ECMAScript 2015）の一部の構文を解釈できるものの、その挙動はES5のものと大差ありません。「モダンJSの構文」を使える一方で、それが「開発者(や生成AI)が知る仕様」と異なるため、予期せぬエラーやバグが頻発します。
@@ -185,10 +164,3 @@ However, absolutely forbid the use delete existing it too.
 
 &gt; Detailed list: https://mozilla.github.io/rhino/compat/engines.html
 </code></pre>
-</main>
-        <footer>
-            <small>&copy; 2025 白居健音</small>
-        </footer>
-    </div>
-</body>
-</html>
