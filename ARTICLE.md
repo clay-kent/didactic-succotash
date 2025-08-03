@@ -5,6 +5,9 @@
 
 MinecraftのMod「KubeJS」は、JavaScriptを用いてゲーム内のレシピ、アイテム、イベントなどを自由にカスタマイズできる強力なツールです。このスクリプトの実行エンジンとして採用されているのが、今でも更新されているJavaベースのJavaScriptエンジン「[Rhino](https://github.com/mozilla/rhino)」です。
 
+![kubejs icon](638583716122159056.png "KubeJSのロゴ")
+![rhino icon](Rhino_(234581759).jpeg "Rhinoのロゴ")
+
 Rhinoは、ES6（ECMAScript 2015）の一部の構文を解釈できるものの、その挙動はES5のものと大差ありません。「モダンJSの構文」を使える一方で、それが「開発者(や生成AI)が知る仕様」と異なるため、予期せぬエラーやバグが頻発します。
 とはいえ、問題はJavascriptエンジンとしての完成度ではなく、そのギャップです。
 ES5と同じ挙動をすると理解して使えば良いのです。
